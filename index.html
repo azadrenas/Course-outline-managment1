@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Example Site</title>
+  <link rel="stylesheet" href="/styles.css"/>
+</head>
+<body>
+  <header><h1>Example Site</h1></header>
+  <main>
+    <section id="hero">
+      <h2>Welcome!</h2>
+      <p>This is a simple example project created for you.</p>
+    </section>
+    <section id="contact">
+      <h3>Contact</h3>
+      <form id="contactForm">
+        <label>Your name <input name="name" required /></label>
+        <label>Email <input type="email" name="email" required /></label>
+        <label>Message <textarea name="message" required></textarea></label>
+        <button type="submit">Send</button>
+      </form>
+      <div id="status" aria-live="polite"></div>
+    </section>
+  </main>
+  <script src="/main.js"></script>
+</body>
+</html>

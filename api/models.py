@@ -91,3 +91,21 @@ class ApprovalLog(models.Model):
 
     def __str__(self):
         return f"{self.version.outline.course_code} (v{self.version.version_number}) - {self.action} by {self.actor.username}"
+    # --- KULLANICI ROLLERİ (USER PROFILE) ---
+
+class UserProfile(models.Model):
+    # Senin istediğin roller burada:
+    ROLE_CHOICES = [
+        ('rectorate', 'Rectorate'),    # Rektörlük
+        ('dean', 'Dean'),              # Dekan
+        ('vice_dean', 'Vice Dean'),    # Dekan Yardımcısı
+        ('admin', 'Admin'),            # Admin
+        ('instructor', 'Instructor'),  # Eğitmen
+    ]
+    
+    # Her profil bir kullanıcıya bağlıdır (OneToOne)
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
+    role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='instructor')
+
+    def __str__(self):
+        return f"{self.user.username} - {self.role}"

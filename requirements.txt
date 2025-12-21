@@ -1,6 +1,11 @@
-asgiref==3.10.0
-Django==5.2.7
-djangorestframework==3.16.1
-psycopg2-binary==2.9.11
-sqlparse==0.5.3
-tzdata==2025.2
+contourpy==1.2.0
+cycler==0.12.1
+fonttools==4.49.0
+kiwisolver==1.4.5
+matplotlib==3.8.3
+numpy==1.26.4
+packaging==24.0
+pillow==10.2.0
+pyparsing==3.1.2
+python-dateutil==2.9.0.post0
+six==1.16.0

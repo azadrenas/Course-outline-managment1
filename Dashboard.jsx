@@ -1,153 +1,153 @@
-import React from "react";
-import { Link } from "react-router-dom";
+import React, { useState, useEffect } from "react";
+import { NavLink, useNavigate } from "react-router-dom";
+import api from "../api"; 
+import CourseSection from "./CourseSection"; // DÜZELTİLDİ: Yan yana oldukları için ./ ile çağırıyoruz
+import "../styles/fiu-dashboard.css"; 
+
+import { 
+  LayoutDashboard, Users, Building2, FilePlus, 
+  ChevronLeft, LogOut, FileText, Clock, Globe 
+} from "lucide-react";
 
 export default function Dashboard() {
+  const [stats, setStats] = useState({ total: 0, pending: 0, instructors: 0 });
+  const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
+
+  // --- Veri Çekme (Sadece istatistikler) ---
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const response = await api.get('outlines/');
+        const data = response.data;
+        
+        const pendingCount = data.filter(o => o.status === 'draft' || o.status === 'pending').length;
+        
+        setStats({
+            total: data.length,
+            pending: pendingCount,
+            instructors: 1 
+        });
+        setLoading(false);
+      } catch (error) {
+        console.error("Dashboard Veri Hatası:", error);
+        setLoading(false);
+        if (error.response && error.response.status === 401) {
+            navigate('/login');
+        }
+      }
+    };
+    fetchData();
+  }, [navigate]);
+
+  const handleLogout = () => {
+      if(window.confirm("Çıkış yapmak istediğinize emin misiniz?")) {
+        localStorage.removeItem('token');
+        localStorage.removeItem('role');
+        navigate('/login');
+      }
+  };
+
   return (
-    <div className="layout">
+    <div className="fiu-shell">
       {/* SIDEBAR */}
-      <aside className="sidebar">
-        <div className="sidebar-logo">
+      <aside className="fiu-sidebar">
+        <div className="fiu-brand">
           <img
             src="https://lms1.final.edu.tr/LMS/pluginfile.php/1/core_admin/logocompact/300x300/1633460467/ufulogomin.JPG"
-            className="sidebar-logo-img"
             alt="FIU Logo"
+            style={{ width: '100%', maxWidth: '120px', display:'block' }}
           />
         </div>
 
-        <button id="collapseBtn" className="collapse-btn">
-          <i data-lucide="chevron-left"></i>
-        </button>
+        <div className="fiu-nav-section">
+            <div className="fiu-nav-label">Main</div>
+            
+            <NavLink to="/instructor" className={({ isActive }) => isActive ? "fiu-nav active" : "fiu-nav"}>
+                <span className="fiu-nav-ico"><LayoutDashboard size={18} /></span>
+                <span>Dashboard</span>
+            </NavLink>
+        </div>
 
-        <div className="nav-section-title">MAIN</div>
+        <div className="fiu-nav-section">
+            <div className="fiu-nav-label">Academic</div>
 
-        <a href="/dashboard" className="nav-link">
-          <i data-lucide="layout-dashboard"></i>
-          <span>Dashboard</span>
-        </a>
+            <NavLink to="/instructors" className={({ isActive }) => isActive ? "fiu-nav active" : "fiu-nav"}>
+                <span className="fiu-nav-ico"><Users size={18} /></span>
+                <span>Instructors</span>
+            </NavLink>
 
-        <div className="nav-section-title">ACADEMIC</div>
+            <NavLink to="/departments" className={({ isActive }) => isActive ? "fiu-nav active" : "fiu-nav"}>
+                <span className="fiu-nav-ico"><Building2 size={18} /></span>
+                <span>Departments</span>
+            </NavLink>
 
-        <a href="/instructors" className="nav-link">
-          <i data-lucide="users"></i>
-          <span>Instructors</span>
-        </a>
+            <NavLink to="/create-outline" className={({ isActive }) => isActive ? "fiu-nav active" : "fiu-nav"}>
+                <span className="fiu-nav-ico"><FilePlus size={18} /></span>
+                <span>New Outline</span>
+            </NavLink>
+        </div>
 
-        <a href="/departments" className="nav-link">
-          <i data-lucide="building-2"></i>
-          <span>Departments</span>
-        </a>
-
-        <a href="/new_outline" className="nav-link">
-          <i data-lucide="file-plus"></i>
-          <span>New Course Outline</span>
-        </a>
+        <div className="fiu-nav-section" style={{ marginTop: 'auto' }}>
+            <button onClick={handleLogout} className="fiu-nav" style={{ width:'100%', background:'transparent', border:'none', cursor:'pointer', color:'#dc2626' }}>
+                <span className="fiu-nav-ico"><LogOut size={18} /></span>
+                <span>Logout</span>
+            </button>
+        </div>
       </aside>
 
       {/* MAIN CONTENT */}
-      <main className="main">
+      <main className="fiu-main">
         {/* TOPBAR */}
-        <div className="topbar">
+        <div className="fiu-topbar">
           <div>
-            <div className="topbar-title">Course Outline Management</div>
-
-            <div style={{ fontSize: "12px", color: "#6b7280" }}>
-              Overview of outlines, instructors and departments
-            </div>
+            <div className="fiu-page-title">Dashboard</div>
+            <div className="fiu-muted">Welcome back, Instructor</div>
           </div>
 
-          <div className="topbar-right">
-            <div className="lang-switch">🌐</div>
-
-            <span className="badge">Admin</span>
-
-            <div className="avatar-container">
-              <div className="avatar">A</div>
-
-              <div className="avatar-menu" id="avatarMenu">
-                <div className="menu-item">Profile</div>
-                <div className="menu-item">Settings</div>
-                <div className="menu-item logout">Log Out</div>
-              </div>
-            </div>
+          <div className="fiu-userbox">
+            <Globe size={20} color="#6b7280" />
+            <span className="fiu-pill">Instructor</span>
+            <div className="fiu-avatar">I</div>
           </div>
         </div>
 
-        {/* STATS CARDS */}
-        <section className="stats-grid">
-          <div className="card">
-            <div className="card-header">
-              <span className="card-label">Total Outlines</span>
-              <div className="card-icon">
-                <i data-lucide="file-text"></i>
-              </div>
-            </div>
-            <div className="card-value" id="totalOutlines">0</div>
-          </div>
-
-          <div className="card">
-            <div className="card-header">
-              <span className="card-label">Active Instructors</span>
-              <div className="card-icon">
-                <i data-lucide="users"></i>
-              </div>
-            </div>
-            <div className="card-value" id="activeInstructors">0</div>
-          </div>
-
-          <div className="card">
-            <div className="card-header">
-              <span className="card-label">Pending Reviews</span>
-              <div className="card-icon">
-                <i data-lucide="clock-3"></i>
-              </div>
-            </div>
-            <div className="card-value" id="pendingReviews">0</div>
-          </div>
-        </section>
-
-        {/* GRAPHS */}
-        <section className="grid-2">
-          <div className="graph-card">
-            <div className="table-title" style={{ marginBottom: "8px" }}>
-              User Activity
-            </div>
-            <canvas id="lineChart"></canvas>
-          </div>
-
-          <div className="graph-card">
-            <div className="table-title" style={{ marginBottom: "8px" }}>
-              Outlines by Department
-            </div>
-            <canvas id="barChart"></canvas>
-          </div>
-        </section>
-
-        {/* RECENT OUTLINES */}
-        <section className="table-card">
-          <div className="table-card-header">
+        {/* İSTATİSTİKLER */}
+        <div className="fiu-stats">
+          <div className="fiu-card fiu-stat">
             <div>
-              <div className="table-title">Recent Course Outlines</div>
-              <div className="table-subtitle">Latest submitted outlines</div>
+                <div className="fiu-stat-title">Total Outlines</div>
+                <div className="fiu-stat-value">{loading ? '-' : stats.total}</div>
             </div>
-
-            <Link to="/new_outline" className="btn-ghost" style={{ textDecoration: 'none' }}>
-              New Outline
-            </Link>
+            <div className="fiu-icon-badge" style={{color:'#1d4ed8'}}>
+                <FileText size={20}/>
+            </div>
           </div>
 
-          <table>
-            <thead>
-              <tr>
-                <th>Course</th>
-                <th>Instructor</th>
-                <th>Dept</th>
-                <th>Updated</th>
-              </tr>
-            </thead>
+          <div className="fiu-card fiu-stat">
+             <div>
+                <div className="fiu-stat-title">Active Instructors</div>
+                <div className="fiu-stat-value">{loading ? '-' : stats.instructors}</div>
+             </div>
+             <div className="fiu-icon-badge" style={{color:'#059669'}}>
+                <Users size={20}/>
+             </div>
+          </div>
 
-            <tbody id="outlineBody"></tbody>
-          </table>
-        </section>
+          <div className="fiu-card fiu-stat">
+             <div>
+                <div className="fiu-stat-title">Pending Reviews</div>
+                <div className="fiu-stat-value">{loading ? '-' : stats.pending}</div>
+             </div>
+             <div className="fiu-icon-badge" style={{color:'#d97706'}}>
+                <Clock size={20}/>
+             </div>
+          </div>
+        </div>
+
+        {/* --- DERS LİSTESİ BİLEŞENİ --- */}
+        <CourseSection />
+
       </main>
     </div>
   );

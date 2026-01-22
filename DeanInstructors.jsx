@@ -83,18 +83,15 @@ export default function DeanInstructors() {
         <div className="fiu-topbar">
           <div><div className="fiu-page-title">Instructors List</div><div className="fiu-muted">Dean View</div></div>
           
-          <div 
-            className="fiu-userbox" 
-            style={{position: 'relative', cursor: 'pointer'}}
-            onClick={() => setShowProfileMenu(!showProfileMenu)}
-          >
-            <div className="fiu-pill" style={{background:'#e0e7ff', color:'#3730a3'}}>Dean</div>
-            <div className="fiu-avatar" style={{background: '#3730a3'}}>D</div>
+          <div style={{display:'flex', gap:'10px', alignItems:'center', position: 'relative'}}>
+             <div className="fiu-pill" style={{background:'#e0e7ff', color:'#3730a3'}}>Dean</div>
              
-             {/* Sağ üst profil menüsü */}
+             {/* Profil Logosu ve Dropdown */}
+             <div className="fiu-avatar" onClick={() => setShowProfileMenu(!showProfileMenu)} style={{background: '#3730a3', cursor: 'pointer'}}>D</div>
+             
              {showProfileMenu && (
                 <div style={{
-                    position: "absolute", top: "120%", right: "0", 
+                    position: "absolute", top: "50px", right: "120px", 
                     background: "white", border: "1px solid #e5e7eb", 
                     borderRadius: "12px", boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1)", 
                     padding: "6px", width: "150px", zIndex: 999
@@ -113,6 +110,8 @@ export default function DeanInstructors() {
                     </button>
                 </div>
              )}
+
+             <button onClick={handleRefresh} className="fiu-btn" disabled={loading} style={{ background: '#fff', border: '1px solid #ddd', color: '#333', padding: '8px 15px', borderRadius: '6px' }}>↻ Refresh</button>
           </div>
         </div>
           
@@ -125,7 +124,7 @@ export default function DeanInstructors() {
             <div className="fiu-table-head"><div className="fiu-chart-title">Registered Staff ({filteredInstructors.length})</div></div>
             <div className="fiu-table-wrap">
                 <table className="fiu-table">
-                    <thead><tr><th>FULL NAME</th><th>EMAIL</th><th>DEPARTMENT</th><th>STATUS</th><th>ACTIONS</th></tr></thead>
+                    <thead><tr><th>FULL NAME</th><th>EMAIL</th><th>DEPARTMENT</th><th>STATUS</th></tr></thead>
                     <tbody>
                         {filteredInstructors.map((ins) => (
                             <tr key={ins.id}>
@@ -133,7 +132,6 @@ export default function DeanInstructors() {
                                 <td style={{ color: '#2563eb' }}>{ins.email}</td>
                                 <td><span style={{ background: '#eff6ff', color: '#1d4ed8', padding: '4px 10px', borderRadius: '20px', fontSize: '12px', fontWeight: '500' }}>{ins.department_name || "General"}</span></td>
                                 <td><span className="fiu-badge-green">Active</span></td>
-                                <td><button style={{padding:'5px 10px', background:'#f3f4f6', color:'#374151', border:'none', borderRadius:'4px'}}>View</button></td>
                             </tr>
                         ))}
                     </tbody>

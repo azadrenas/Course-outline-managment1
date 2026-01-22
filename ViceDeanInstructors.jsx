@@ -17,20 +17,12 @@ export default function ViceDeanInstructors() {
     fetchData();
   }, []);
 
-  // --- KESİN ÇÖZÜM: HARD LOGOUT FUNCTION (Burayı ekledim) ---
   const handleForceLogout = (e) => {
-      // Olası event hatalarını engelle
       if(e && e.preventDefault) e.preventDefault();
       if(e && e.stopPropagation) e.stopPropagation();
-
-      // 1. Context içindeki logout'u çağır
       if(logout) logout();
-
-      // 2. LocalStorage'ı manuel temizle (Garanti olsun)
       localStorage.removeItem("access");
       localStorage.removeItem("refresh");
-
-      // 3. Tarayıcıyı zorla Login'e fırlat
       window.location.href = "/login";
   };
 
@@ -61,7 +53,6 @@ export default function ViceDeanInstructors() {
 
             <div className="fiu-nav-label" style={{marginTop:'20px'}}>LISTS</div>
             
-            {/* Burası Aktif */}
             <div className="fiu-nav active" style={{cursor:'pointer'}}>
                 <span className="fiu-nav-ico">👥</span> Instructors List
             </div>
@@ -99,7 +90,7 @@ export default function ViceDeanInstructors() {
                     boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1)", padding: "6px", width: "140px", zIndex: 999
                 }}>
                     <button 
-                        onClick={handleForceLogout} // GÜNCELLENDİ: Burası artık handleForceLogout çağırıyor
+                        onClick={handleForceLogout}
                         style={{width: "100%", textAlign: "left", padding: "8px 12px", background: "transparent", border: "none", color: "#ef4444", fontWeight: "bold", cursor: "pointer", fontSize: "13px", display: "flex", alignItems: "center", gap: "6px"}}
                     >
                         🚪 Logout
@@ -128,7 +119,8 @@ export default function ViceDeanInstructors() {
                             <th>EMAIL</th>
                             <th>DEPARTMENT</th>
                             <th>STATUS</th>
-                            <th style={{textAlign:'right'}}>ACTIONS</th>
+                            {/* Actions başlığını kaldırdım çünkü artık action yok */}
+                            <th style={{textAlign:'right'}}></th> 
                         </tr>
                     </thead>
                     <tbody>
@@ -140,7 +132,7 @@ export default function ViceDeanInstructors() {
                                     <td><span style={{ background: '#eff6ff', color: '#1d4ed8', padding: '4px 10px', borderRadius: '20px', fontSize: '12px', fontWeight: '500' }}>{ins.department_name || "General"}</span></td>
                                     <td><span className="fiu-badge-green">Active</span></td>
                                     <td style={{textAlign:'right'}}>
-                                        <button style={{padding:'5px 10px', background:'#f3f4f6', color:'#374151', border:'none', borderRadius:'4px', cursor:'pointer', fontSize:'12px'}}>View Profile</button>
+                                        {/* Buton kaldırıldı */}
                                     </td>
                                 </tr>
                             ))

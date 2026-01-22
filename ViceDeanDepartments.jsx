@@ -1,324 +1,202 @@
-// src/pages/ViceDeanDashboard.jsx
+// src/pages/ViceDeanDepartments.jsx
 import React, { useState, useEffect } from "react";
-import { useAuth } from "../context/AuthContext";
-// useNavigate'i sildim veya bıraksam da kullanmayacağım, direkt browser yönlendirmesi yapıcam.
 import { useNavigate } from "react-router-dom";
-import api from "../api"; 
+import { useCourses } from "../context/CourseContext";
+import { useAuth } from "../context/AuthContext";
 import "../styles/fiu-dashboard.css"; 
 
-export default function ViceDeanDashboard() {
-  const { user, logout } = useAuth();
+export default function ViceDeanDepartments() {
+  const { user, logout } = useAuth(); 
+  const { departments, instructors, courses, fetchData } = useCourses();
   const navigate = useNavigate();
+  const [loading, setLoading] = useState(false);
+  const [showProfileMenu, setShowProfileMenu] = useState(false);
 
-  // --- STATE YÖNETİMİ ---
-  const [pendingReviews, setPendingReviews] = useState([]);
-  const [loading, setLoading] = useState(true);
-
-  // Modal (Pencere) için State'ler
-  const [isRejectModalOpen, setIsRejectModalOpen] = useState(false);
-  const [rejectionReason, setRejectionReason] = useState("");
-  const [selectedCourseId, setSelectedCourseId] = useState(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
-  // --- DROPDOWN STATE ---
-  const [showDropdown, setShowDropdown] = useState(false);
-
-  // --- VERİLERİ ÇEKME FONKSİYONU ---
-  const fetchPendingOutlines = async () => {
-    try {
-        setLoading(true);
-        const response = await api.get("/api/outlines/"); 
-        
-        const allCourses = Array.isArray(response.data) ? response.data : [];
-        
-        const filtered = allCourses.filter(c => c.status === "submitted");
-        
-        setPendingReviews(filtered);
-    } catch (error) {
-        console.error("Data fetch error:", error);
-    } finally {
-        setLoading(false);
-    }
-  };
+  const [openStaffIds, setOpenStaffIds] = useState([]);
+  const [openCourseIds, setOpenCourseIds] = useState([]);
 
   useEffect(() => {
-    fetchPendingOutlines();
+    fetchData();
   }, []);
 
-  // --- KESİN ÇÖZÜM: HARD LOGOUT FUNCTION ---
   const handleForceLogout = (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-
-      // 1. Önce AuthContext içindeki logout'u çağır (varsa)
+      if(e && e.preventDefault) e.preventDefault();
+      if(e && e.stopPropagation) e.stopPropagation();
       if(logout) logout();
-
-      // 2. LocalStorage'ı manuel olarak da temizle (Garanti olsun)
       localStorage.removeItem("access");
       localStorage.removeItem("refresh");
-
-      // 3. React Router'ı (navigate) BOŞVER. Direkt tarayıcıyı yönlendir.
-      // Bu komut sayfayı tamamen yeniler ve login'e atar. Kaçarı yok.
       window.location.href = "/login";
   };
 
-  // --- ONAYLA (Approve) ---
-  const handleApprove = async (id) => {
-    if(window.confirm("Are you sure you want to approve this outline?")) {
-        try {
-            const url = "/api/outlines/" + id + "/approve/";
-            await api.post(url);
-            
-            alert("✅ Course Approved! Forwarded to Dean.");
-            fetchPendingOutlines(); 
-        } catch (error) {
-            console.error("Approval error:", error);
-            alert("❌ An error occurred.");
-        }
-    }
+  const handleRefresh = async () => {
+    setLoading(true);
+    await fetchData();
+    setOpenStaffIds([]);    
+    setOpenCourseIds([]);   
+    setLoading(false);
   };
 
-  const handleRejectClick = (id) => {
-    setSelectedCourseId(id);
-    setRejectionReason(""); 
-    setIsRejectModalOpen(true); 
+  const toggleStaff = (id) => {
+    if (openStaffIds.includes(id)) setOpenStaffIds(openStaffIds.filter(itemId => itemId !== id));
+    else setOpenStaffIds([...openStaffIds, id]);
   };
 
-  const submitReject = async () => {
-    if (!rejectionReason || rejectionReason.trim() === "") {
-        alert("Please enter a rejection reason!");
-        return;
-    }
-
-    setIsSubmitting(true);
-
-    try {
-        const url = "/api/outlines/" + selectedCourseId + "/reject/";
-        const taggedReason = "VICE::" + rejectionReason;
-
-        await api.post(url, {
-            reason: taggedReason
-        });
-        
-        alert("🚫 Course Rejected. Reason sent to instructor.");
-        
-        setIsRejectModalOpen(false); 
-        fetchPendingOutlines(); 
-    } catch (error) {
-        console.error("Rejection error:", error);
-        alert("❌ An error occurred. Please try again.");
-    } finally {
-        setIsSubmitting(false);
-    }
-  };
-
-  const handleView = (course) => {
-      navigate("/create-outline", { state: { courseToEdit: course } });
+  const toggleCourses = (id) => {
+    if (openCourseIds.includes(id)) setOpenCourseIds(openCourseIds.filter(itemId => itemId !== id));
+    else setOpenCourseIds([...openCourseIds, id]);
   };
 
   return (
     <div className="fiu-shell">
-      {/* SIDEBAR */}
       <aside className="fiu-sidebar">
         <div className="fiu-brand">FIU SYSTEM</div>
         <div className="fiu-nav-section">
             <div className="fiu-nav-label">ACADEMIC ADMIN</div>
             
-            <div className="fiu-nav active" style={{cursor:'pointer'}}>
+            <div onClick={() => navigate('/vice-dean')} className="fiu-nav" style={{cursor:'pointer'}}>
                 <span className="fiu-nav-ico">🔍</span> Review Outlines
             </div>
+
+            <div className="fiu-nav-label" style={{marginTop:'20px'}}>LISTS</div>
             
             <div onClick={() => navigate('/vice-dean/instructors')} className="fiu-nav" style={{cursor:'pointer'}}>
                 <span className="fiu-nav-ico">👥</span> Instructors List
             </div>
             
-            <div onClick={() => navigate('/vice-dean/departments')} className="fiu-nav" style={{cursor:'pointer'}}>
+            <div className="fiu-nav active" style={{cursor:'pointer'}}>
                 <span className="fiu-nav-ico">🏢</span> Departments
             </div>
         </div>
       </aside>
 
-      {/* MAIN CONTENT */}
       <main className="fiu-main">
         <div className="fiu-topbar">
           <div>
-            <div className="fiu-page-title">Vice Dean Panel</div>
-            <div className="fiu-muted">Pending Reviews</div>
+            <div className="fiu-page-title">Departments</div>
+            <div className="fiu-muted">Faculty overview & stats (Vice Dean View)</div>
           </div>
           
-          {/* USERBOX - LOGOUT MENÜSÜ */}
-          <div 
-            className="fiu-userbox"
-            onClick={() => setShowDropdown(!showDropdown)} 
-            style={{position: 'relative', cursor: 'pointer'}} 
-          >
-            <div className="fiu-pill" style={{background:'#dbeafe', color:'#1e40af'}}>
-                {user?.name || "Vice Dean"}
-            </div>
-            
-            <div className="fiu-avatar">VD</div>
+          <div style={{display:'flex', gap:'10px', alignItems:'center', position: 'relative'}}>
+             <div className="fiu-pill" style={{background:'#dbeafe', color:'#1e40af'}}>
+                Vice Dean
+             </div>
+             
+             <div 
+                className="fiu-avatar" 
+                onClick={() => setShowProfileMenu(!showProfileMenu)}
+                style={{background: '#c8102e', cursor: 'pointer'}}
+             >
+                VD
+             </div>
 
-            {/* AÇILIR MENÜ (DROPDOWN) */}
-            {showDropdown && (
+             {showProfileMenu && (
                 <div style={{
-                    position: 'absolute',
-                    top: '120%',
-                    right: 0,
-                    background: 'white',
-                    border: '1px solid #e5e7eb',
-                    borderRadius: '8px',
-                    boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
-                    padding: '8px',
-                    zIndex: 50,
-                    minWidth: '150px'
+                    position: "absolute", top: "50px", right: "120px",
+                    background: "white", border: "1px solid #e5e7eb", borderRadius: "12px", 
+                    boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1)", padding: "6px", width: "140px", zIndex: 999
                 }}>
                     <button 
-                        onClick={handleForceLogout} // BURAYA DİKKAT: YENİ FONKSİYON
-                        style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            width: '100%',
-                            padding: '8px 12px',
-                            fontSize: '14px',
-                            color: '#ef4444', 
-                            background: 'transparent',
-                            border: 'none',
-                            cursor: 'pointer',
-                            borderRadius: '4px',
-                            transition: 'background 0.2s'
-                        }}
-                        onMouseOver={(e) => e.target.style.background = '#fef2f2'}
-                        onMouseOut={(e) => e.target.style.background = 'transparent'}
+                        onClick={handleForceLogout}
+                        style={{width: "100%", textAlign: "left", padding: "8px 12px", background: "transparent", border: "none", color: "#ef4444", fontWeight: "bold", cursor: "pointer", fontSize: "13px", display: "flex", alignItems: "center", gap: "6px"}}
                     >
-                        <span style={{marginRight: '8px'}}>🚪</span> Logout
+                        🚪 Logout
                     </button>
                 </div>
-            )}
+             )}
+
+             <button onClick={handleRefresh} className="fiu-btn" disabled={loading} style={{ background: '#fff', border: '1px solid #ddd', color: '#333', padding: '8px 15px', borderRadius: '6px', cursor: 'pointer' }}>
+                {loading ? "..." : "↻ Refresh"}
+             </button>
           </div>
         </div>
 
-        <div className="fiu-card fiu-table-card">
-            <div className="fiu-table-head">
-                <div className="fiu-chart-title">Incoming Course Outlines</div>
-                <button onClick={fetchPendingOutlines} className="fiu-btn">Refresh ↻</button>
+        <div style={{ marginTop: '20px', display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(380px, 1fr))', gap: '20px' }}>
+          {departments.length > 0 ? (
+            departments.map((dept) => {
+              const deptStaff = (instructors || []).filter(ins => ins.department_name === dept.name);
+              const deptCourses = (courses || []).filter(c => c.department === dept.id || c.department_name === dept.name);
+              
+              const isStaffOpen = openStaffIds.includes(dept.id);
+              const isCoursesOpen = openCourseIds.includes(dept.id);
+
+              return (
+                <div key={dept.id} className="fiu-card" style={{ borderTop: '4px solid #c8102e', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)' }}>
+                    <div style={{ padding: '25px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+                          <div style={{ fontSize: '26px', background: '#fef2f2', color: '#c8102e', width: '55px', height: '55px', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>🏢</div>
+                          <div>
+                             {/* --- KRAL HAMLE: BURASI DİNAMİKLEŞTİRİLDİ --- */}
+                             <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 'bold', color: '#1f2937' }}>
+                                {dept.faculty_name ? dept.faculty_name : "No Faculty Assigned"}
+                             </h3>
+                             {/* --------------------------------------------- */}
+                             <p style={{ margin: '3px 0 0', fontSize: '12px', color: '#6b7280' }}>{dept.name}</p>
+                          </div>
+                        </div>
+                        <hr style={{ border: 'none', borderTop: '1px solid #f3f4f6', margin: '15px 0' }} />
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
+                          <div style={{ display: 'flex', gap: '20px' }}>
+                              <div style={{ textAlign: 'center' }}>
+                                  <div style={{ fontSize: '18px', fontWeight: 'bold', color: '#111' }}>{deptStaff.length}</div>
+                                  <div style={{ fontSize: '10px', color: '#6b7280', fontWeight: '600' }}>STAFF</div>
+                              </div>
+                              <div style={{ borderLeft: '1px solid #e5e7eb' }}></div>
+                              <div style={{ textAlign: 'center' }}>
+                                  <div style={{ fontSize: '18px', fontWeight: 'bold', color: '#111' }}>{deptCourses.length}</div>
+                                  <div style={{ fontSize: '10px', color: '#6b7280', fontWeight: '600' }}>COURSES</div>
+                              </div>
+                          </div>
+                          <div style={{ display: 'flex', gap: '8px' }}>
+                              <button onClick={() => toggleStaff(dept.id)} style={{ background: isStaffOpen ? '#f3f4f6' : '#fff', border: '1px solid #e5e7eb', padding: '6px 10px', borderRadius: '6px', fontSize: '11px', fontWeight: '600', cursor: 'pointer', color: isStaffOpen ? '#111' : '#374151' }}>{isStaffOpen ? "Hide Staff" : "View Staff"}</button>
+                              <button onClick={() => toggleCourses(dept.id)} style={{ background: isCoursesOpen ? '#eff6ff' : '#fff', border: isCoursesOpen ? '1px solid #bfdbfe' : '1px solid #e5e7eb', padding: '6px 10px', borderRadius: '6px', fontSize: '11px', fontWeight: '600', cursor: 'pointer', color: isCoursesOpen ? '#1e40af' : '#374151' }}>{isCoursesOpen ? "Hide Courses" : "View Courses"}</button>
+                          </div>
+                        </div>
+                    </div>
+                    {isStaffOpen && (
+                        <div style={{ background: '#f9fafb', borderTop: '1px solid #e5e7eb', padding: '15px 25px' }}>
+                           <h4 style={{ margin: '0 0 10px 0', fontSize: '11px', textTransform: 'uppercase', color: '#6b7280', fontWeight: 'bold' }}>Department Staff</h4>
+                           {deptStaff.length > 0 ? (
+                               <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
+                                   {deptStaff.map(staff => (
+                                     <li key={staff.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '6px 0', borderBottom: '1px solid #e5e7eb' }}>
+                                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                             <div style={{ width: '22px', height: '22px', borderRadius: '50%', background: '#e5e7eb', color: '#4b5563', fontSize: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold' }}>{staff.first_name.charAt(0)}</div>
+                                             <span style={{ fontSize: '13px', color: '#374151' }}>{staff.first_name} {staff.last_name}</span>
+                                         </div>
+                                     </li>
+                                   ))}
+                               </ul>
+                           ) : <div style={{ fontSize: '13px', color: '#9ca3af' }}>No instructors.</div>}
+                        </div>
+                    )}
+                    {isCoursesOpen && (
+                        <div style={{ background: '#f0f9ff', borderTop: '1px solid #bfdbfe', padding: '15px 25px' }}>
+                           <h4 style={{ margin: '0 0 10px 0', fontSize: '11px', textTransform: 'uppercase', color: '#1e40af', fontWeight: 'bold' }}>Department Courses</h4>
+                           {deptCourses.length > 0 ? (
+                               <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
+                                   {deptCourses.map(course => (
+                                     <li key={course.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 0', borderBottom: '1px solid #bfdbfe' }}>
+                                         <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                             <span style={{ fontSize: '13px', fontWeight: 'bold', color: '#1e3a8a' }}>{course.course_code || course.code}</span>
+                                             <span style={{ fontSize: '12px', color: '#1e40af' }}>{course.course_name || "-"}</span>
+                                         </div>
+                                         <span style={{ fontSize: '11px', background: '#fff', border: '1px solid #bfdbfe', padding: '2px 6px', borderRadius: '4px', color: '#1e40af' }}>Sem: {course.semester || "?"}</span>
+                                     </li>
+                                   ))}
+                               </ul>
+                           ) : <div style={{ fontSize: '13px', color: '#60a5fa' }}>No courses listed.</div>}
+                        </div>
+                    )}
+                </div>
+              );
+            })
+          ) : (
+            <div style={{ gridColumn: '1 / -1', padding: '50px', textAlign: 'center', background: 'white', borderRadius: '12px' }}>
+                <p style={{ color: '#9ca3af' }}>No departments found.</p>
             </div>
-            
-            <div className="fiu-table-wrap">
-                <table className="fiu-table">
-                    <thead>
-                        <tr>
-                            <th>CODE</th>
-                            <th>COURSE NAME</th>
-                            <th>SEMESTER</th>
-                            <th>STATUS</th>
-                            <th style={{textAlign:'right'}}>ACTIONS</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {loading ? (
-                            <tr><td colSpan="5" style={{textAlign:'center', padding:'20px'}}>Loading...</td></tr>
-                        ) : pendingReviews.length === 0 ? (
-                            <tr><td colSpan="5" style={{textAlign:'center', padding:'40px', color:'#999'}}>✅ No pending outlines.</td></tr>
-                        ) : (
-                            pendingReviews.map((item) => (
-                                <tr key={item.id}>
-                                    <td className="fiu-strong">{item.course_code || item.code}</td>
-                                    <td>{item.course_name || item.title}</td>
-                                    <td>{item.semester}</td>
-                                    <td><span className="fiu-badge-yellow">Waiting Approval</span></td>
-                                    <td style={{textAlign:'right'}}>
-                                        <button onClick={() => handleView(item)} style={{marginRight:'10px', padding:'6px 12px', cursor:'pointer'}}>View</button>
-                                        
-                                        <button onClick={() => handleApprove(item.id)} style={{marginRight:'5px', background:'#dcfce7', color:'#166534', border:'none', padding:'6px 12px', borderRadius:'4px', cursor:'pointer', fontWeight:'bold'}}>
-                                            Approve
-                                        </button>
-                                        
-                                        <button onClick={() => handleRejectClick(item.id)} style={{background:'#fee2e2', color:'#991b1b', border:'none', padding:'6px 12px', borderRadius:'4px', cursor:'pointer', fontWeight:'bold'}}>
-                                            Reject
-                                        </button>
-                                    </td>
-                                </tr>
-                            ))
-                        )}
-                    </tbody>
-                </table>
-            </div>
+          )}
         </div>
       </main>
-
-      {/* --- REJECT MODAL --- */}
-      {isRejectModalOpen && (
-        <div style={{
-            position: 'fixed',
-            top: 0, left: 0, right: 0, bottom: 0,
-            backgroundColor: 'rgba(0,0,0,0.5)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 9999
-        }}>
-          <div style={{
-              backgroundColor: 'white',
-              padding: '24px',
-              borderRadius: '8px',
-              width: '400px',
-              boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
-          }}>
-            <h3 style={{marginTop: 0, marginBottom: '16px', fontSize: '1.25rem', fontWeight: 'bold'}}>Reject Course</h3>
-            
-            <p style={{marginBottom: '8px', fontSize: '0.875rem', color: '#666'}}>
-              Please enter the rejection reason. This note will be sent to the instructor.
-            </p>
-
-            <textarea
-              style={{
-                  width: '100%',
-                  height: '100px',
-                  padding: '8px',
-                  marginBottom: '16px',
-                  border: '1px solid #ddd',
-                  borderRadius: '4px',
-                  resize: 'none'
-              }}
-              placeholder="e.g., Missing references..."
-              value={rejectionReason}
-              onChange={(e) => setRejectionReason(e.target.value)}
-            />
-
-            <div style={{display: 'flex', justifyContent: 'flex-end', gap: '8px'}}>
-              <button 
-                onClick={() => setIsRejectModalOpen(false)}
-                style={{
-                    padding: '8px 16px',
-                    backgroundColor: '#e5e7eb',
-                    border: 'none',
-                    borderRadius: '4px',
-                    cursor: 'pointer'
-                }}
-              >
-                Cancel
-              </button>
-              
-              <button 
-                onClick={submitReject}
-                disabled={isSubmitting}
-                style={{
-                    padding: '8px 16px',
-                    backgroundColor: '#dc2626',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '4px',
-                    cursor: 'pointer',
-                    opacity: isSubmitting ? 0.7 : 1
-                }}
-              >
-                {isSubmitting ? "Sending..." : "Reject and Send"}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
     </div>
   );
 }

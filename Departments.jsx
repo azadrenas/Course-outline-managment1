@@ -61,7 +61,6 @@ export default function Departments() {
             
             <div className="fiu-nav-label">MAIN</div>
             
-            {/* --- DÜZELTİLDİ: DASHBOARD --- */}
             <div 
                 onClick={() => navigate('/instructor', { state: { tab: 'dashboard' } })} 
                 className="fiu-nav" 
@@ -70,7 +69,6 @@ export default function Departments() {
                 <span className="fiu-nav-ico">⊞</span> Dashboard
             </div>
 
-            {/* --- DÜZELTİLDİ: COURSE SECTIONS --- */}
             <div 
                 onClick={() => navigate('/instructor', { state: { tab: 'sections' } })} 
                 className="fiu-nav" 
@@ -154,7 +152,11 @@ export default function Departments() {
                         <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
                           <div style={{ fontSize: '26px', background: '#fef2f2', color: '#c8102e', width: '55px', height: '55px', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>🏢</div>
                           <div>
-                             <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 'bold', color: '#1f2937' }}>Faculty of Engineering</h3>
+                             {/* --- DÜZELTME BURADA YAPILDI --- */}
+                             {/* Sabit yazı yerine veritabanından gelen veriyi çekiyoruz */}
+                             <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 'bold', color: '#1f2937' }}>
+                                {dept.faculty_name || dept.faculty || "Faculty"}
+                             </h3>
                              <p style={{ margin: '3px 0 0', fontSize: '12px', color: '#6b7280' }}>{dept.name}</p>
                           </div>
                         </div>

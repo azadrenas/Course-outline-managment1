@@ -1,14 +1,14 @@
 // src/pages/ViceDeanDashboard.jsx
 import React, { useState, useEffect } from "react";
 import { useAuth } from "../context/AuthContext";
-// useNavigate'i sildim veya bıraksam da kullanmayacağım, direkt browser yönlendirmesi yapıcam.
+// useNavigate'i MUTLAKA import etmeliyiz, çünkü "View" işlemi veri taşıyarak gitmeli.
 import { useNavigate } from "react-router-dom";
 import api from "../api"; 
 import "../styles/fiu-dashboard.css"; 
 
 export default function ViceDeanDashboard() {
   const { user, logout } = useAuth();
-  const navigate = useNavigate();
+  const navigate = useNavigate(); // React Router navigasyonu
 
   // --- STATE YÖNETİMİ ---
   const [pendingReviews, setPendingReviews] = useState([]);
@@ -31,6 +31,7 @@ export default function ViceDeanDashboard() {
         
         const allCourses = Array.isArray(response.data) ? response.data : [];
         
+        // Sadece 'submitted' (onay bekleyen) olanları filtrele
         const filtered = allCourses.filter(c => c.status === "submitted");
         
         setPendingReviews(filtered);
@@ -46,6 +47,7 @@ export default function ViceDeanDashboard() {
   }, []);
 
   // --- KESİN ÇÖZÜM: HARD LOGOUT FUNCTION ---
+  // Logout için tarayıcıyı zorla yenilemek mantıklı, bunu koruyoruz.
   const handleForceLogout = (e) => {
       e.preventDefault();
       e.stopPropagation();
@@ -56,9 +58,9 @@ export default function ViceDeanDashboard() {
       // 2. LocalStorage'ı manuel olarak da temizle (Garanti olsun)
       localStorage.removeItem("access");
       localStorage.removeItem("refresh");
+      localStorage.removeItem("user"); // User verisini de silelim
 
-      // 3. React Router'ı (navigate) BOŞVER. Direkt tarayıcıyı yönlendir.
-      // Bu komut sayfayı tamamen yeniler ve login'e atar. Kaçarı yok.
+      // 3. Tarayıcıyı tamamen Login sayfasına yönlendir
       window.location.href = "/login";
   };
 
@@ -78,6 +80,7 @@ export default function ViceDeanDashboard() {
     }
   };
 
+  // --- REDDET (Reject) ---
   const handleRejectClick = (id) => {
     setSelectedCourseId(id);
     setRejectionReason(""); 
@@ -112,7 +115,12 @@ export default function ViceDeanDashboard() {
     }
   };
 
+  // --- GÖRÜNTÜLE (View/Edit) ---
+  // BURASI KRİTİK: window.location yerine 'navigate' kullanmalıyız.
+  // Çünkü 'state' objesi (courseToEdit) sadece React Router ile taşınabilir.
   const handleView = (course) => {
+      console.log("Navigating to View with course:", course.course_code);
+      // Not: NewOutline.jsx dosyası veriyi 'location.state.courseToEdit' üzerinden okur.
       navigate("/create-outline", { state: { courseToEdit: course } });
   };
 
@@ -173,7 +181,7 @@ export default function ViceDeanDashboard() {
                     minWidth: '150px'
                 }}>
                     <button 
-                        onClick={handleForceLogout} // BURAYA DİKKAT: YENİ FONKSİYON
+                        onClick={handleForceLogout} // Hard logout fonksiyonu burada çağrılıyor
                         style={{
                             display: 'flex',
                             alignItems: 'center',
@@ -227,6 +235,7 @@ export default function ViceDeanDashboard() {
                                     <td>{item.semester}</td>
                                     <td><span className="fiu-badge-yellow">Waiting Approval</span></td>
                                     <td style={{textAlign:'right'}}>
+                                        {/* VIEW BUTTON - handleView çağırır */}
                                         <button onClick={() => handleView(item)} style={{marginRight:'10px', padding:'6px 12px', cursor:'pointer'}}>View</button>
                                         
                                         <button onClick={() => handleApprove(item.id)} style={{marginRight:'5px', background:'#dcfce7', color:'#166534', border:'none', padding:'6px 12px', borderRadius:'4px', cursor:'pointer', fontWeight:'bold'}}>

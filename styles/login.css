@@ -1,0 +1,179 @@
+/* src/styles/login.css */
+
+.login-container {
+  display: flex;
+  height: 100vh;
+  width: 100%;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  background: #fff;
+}
+
+/* --- SOL TARAF (Form) --- */
+.login-left {
+  width: 40%;
+  min-width: 400px;
+  background: #fff;
+  padding: 60px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+/* Header Alanı */
+.login-header {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 40px;
+  width: 100%;
+}
+
+.login-logo {
+  height: 200px;
+  width: auto;
+  object-fit: contain;
+}
+
+/* Dil Seçimi */
+.language-wrapper {
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.lang-select {
+  border: 1px solid #ddd;
+  padding: 5px 10px;
+  border-radius: 4px;
+  background: #fff;
+  font-size: 12px;
+  cursor: pointer;
+  outline: none;
+}
+
+/* Form Elemanları */
+.login-form {
+  width: 100%;
+  max-width: 400px;
+  margin: 0 auto;
+}
+
+.login-form label {
+  font-weight: 600;
+  font-size: 14px;
+  color: #333;
+  margin-top: 20px;
+  display: block;
+  margin-bottom: 8px;
+}
+
+.login-form input[type="text"],
+.login-form input[type="password"] {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 14px;
+  transition: border 0.3s;
+}
+
+.login-form input:focus {
+  border-color: #000;
+  outline: none;
+}
+
+/* Options */
+.login-options {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: 20px 0 30px 0;
+  font-size: 15px;
+}
+
+/* --- KRİTİK NOKTA: KUTUYU BURASI GİZLİYOR --- */
+.remember-label {
+  display: none !important; /* O kutuyu kesin olarak yok eder */
+}
+
+.forgot-link {
+  cursor: pointer;
+  color: #666;
+  text-decoration: none;
+  font-weight: 500;
+  margin-left: auto; /* Kutu gidince link sağa yaslansın */
+}
+
+.forgot-link:hover {
+  text-decoration: underline;
+  color: #000;
+}
+
+/* Buton */
+.login-btn {
+  width: 100%;
+  background: #000;
+  color: #fff;
+  border: none;
+  padding: 14px;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+
+.login-btn:hover {
+  background: #333;
+}
+
+/* --- SAĞ TARAF (Resim) --- */
+.login-right {
+  width: 60%;
+  background-size: cover;
+  background-position: center;
+  position: relative;
+}
+
+.login-right::before {
+  content: "";
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.1); 
+}
+
+/* RESPONSIVE */
+@media screen and (max-width: 900px) {
+  .login-right {
+    display: none !important;
+  }
+
+  .login-left {
+    width: 100%;
+    min-width: auto;
+    padding: 20px;
+  }
+
+  .login-form {
+    max-width: 100%;
+  }
+
+  .login-logo {
+    height: 120px;
+  }
+
+  .login-header {
+    flex-direction: column;
+    gap: 10px;
+  }
+  
+  .language-wrapper {
+    position: relative;
+    top: auto;
+    right: auto;
+    transform: none;
+    align-self: flex-end;
+  }
+}

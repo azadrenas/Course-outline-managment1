@@ -1,0 +1,267 @@
+/* =========================================
+   MASAÜSTÜ (DEFAULT) AYARLARI
+   ========================================= */
+
+.paper-container {
+  background-color: #525659;
+  min-height: 100vh;
+  padding: 40px 0;
+  display: flex;
+  justify-content: center;
+}
+
+.a4-page {
+  width: 210mm;
+  min-height: 297mm;
+  background: white;
+  padding: 20mm;
+  box-shadow: 0 0 10px rgba(0,0,0,0.3);
+  position: relative;
+  font-family: "Times New Roman", Times, serif; /* Resmi belge fontu */
+  color: #000;
+}
+
+/* Header */
+.doc-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  margin-bottom: 10px;
+}
+.uni-title {
+  font-weight: bold;
+  font-size: 18px;
+  line-height: 1.2;
+}
+.doc-title {
+  text-align: center;
+  font-weight: bold;
+  font-size: 16px;
+  margin-top: 5px;
+}
+
+/* Kırmızı Çizgi */
+.red-bar {
+  height: 25px; /* Görseldeki kalın kırmızı şerit */
+  background-color: #b30000;
+  margin-bottom: 2px;
+  border: 2px solid #000;
+}
+
+/* Tablo Yapısı - Azad stili */
+.outline-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+  margin-bottom: 0; /* Tablolar birbirine yapışık */
+}
+
+.outline-table th, .outline-table td {
+  border: 1px solid #000; /* Net siyah çizgiler */
+  padding: 4px;
+  vertical-align: middle;
+}
+
+.outline-table th {
+  font-weight: bold;
+  text-align: center;
+  background-color: #fff; 
+}
+
+/* Gri Arka Planlı Başlıklar */
+.gray-header {
+  background-color: #d9d9d9 !important;
+  font-weight: bold;
+  text-align: center;
+}
+
+/* Inputlar - Tablo içinde kaybolsun */
+.table-input {
+  width: 100%;
+  border: none;
+  font-family: inherit;
+  font-size: inherit;
+  outline: none;
+  background: transparent;
+}
+
+.table-textarea {
+  width: 100%;
+  border: none;
+  font-family: inherit;
+  font-size: inherit;
+  resize: vertical;
+  outline: none;
+  min-height: 60px;
+}
+
+/* Footer Submit Butonu */
+.floating-save-btn {
+  position: fixed;
+  bottom: 30px;
+  right: 30px;
+  background-color: #b30000;
+  color: white;
+  border: none;
+  padding: 15px 25px;
+  font-size: 16px;
+  font-weight: bold;
+  border-radius: 50px;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+  cursor: pointer;
+  z-index: 999;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.floating-save-btn:hover {
+  background-color: #8a0000;
+}
+
+
+/* =========================================
+   MOBİL VE TABLET UYUMLULUK (RESPONSIVE)
+   ========================================= */
+
+@media screen and (max-width: 768px) {
+    
+    /* 1. Gri Arka Planı Kaldır, Tam Ekran Yap */
+    .paper-container {
+        padding: 0;
+        background-color: #fff;
+        display: block; /* Flex'i iptal et */
+        padding-bottom: 100px; /* Buton için boşluk */
+    }
+
+    /* 2. A4 Boyutunu İptal Et -> %100 Genişlik */
+    .a4-page {
+        width: 100%;
+        min-height: auto;
+        padding: 15px;
+        box-shadow: none;
+        margin: 0;
+        border-radius: 0;
+        box-sizing: border-box;
+    }
+
+    /* 3. Header Düzeni */
+    .doc-header {
+        flex-direction: column;
+        text-align: center;
+        gap: 10px;
+    }
+    
+    .doc-header img {
+        height: 50px !important; /* Logoyu küçült */
+    }
+
+    .uni-title {
+        font-size: 16px;
+    }
+
+    /* 4. TABLOLARI MOBİLE UYDURMA (Önemli Kısım) */
+    /* Tabloyu blok element gibi davranmaya zorluyoruz */
+    .outline-table, 
+    .outline-table tbody, 
+    .outline-table tr, 
+    .outline-table td, 
+    .outline-table th {
+        display: block; 
+        width: 100%;
+    }
+
+    /* Satırları birbirinden ayır, kart gibi göster */
+    .outline-table tr {
+        margin-bottom: 15px; 
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        background: #fff;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        overflow: hidden;
+    }
+
+    /* Hücre çizgilerini kaldır, padding ekle */
+    .outline-table td, .outline-table th {
+        border: none;
+        border-bottom: 1px solid #f3f4f6;
+        padding: 10px;
+        text-align: left !important;
+        position: relative;
+    }
+
+    .outline-table td:last-child {
+        border-bottom: none;
+    }
+
+    /* Etiketleri (Soldaki başlıkları) belirginleştir */
+    .outline-table td:first-child,
+    .outline-table th {
+        font-weight: bold;
+        background-color: #f9fafb;
+        color: #374151;
+        font-size: 13px;
+        text-transform: uppercase;
+    }
+
+    /* 5. INPUTLARI MOBİLDE KULLANIŞLI YAP */
+    .table-input, 
+    .table-textarea, 
+    select.table-input {
+        font-size: 16px; /* 16px altı iOS'ta zoom yapar, bunu engelliyoruz */
+        padding: 8px;
+        border: 1px solid #d1d5db;
+        border-radius: 4px;
+        background: #fff;
+        height: auto;
+        min-height: 40px; /* Parmakla basmak kolay olsun */
+        margin-top: 5px;
+    }
+
+    .table-textarea {
+        min-height: 100px;
+    }
+
+    /* Haftalık Tablo Özel Ayar (Hafta numarası küçük kalsın) */
+    .outline-table tr td:first-child {
+        width: 100% !important;
+    }
+
+    /* 6. KAYDET BUTONU MOBİL AYARI */
+    .floating-save-btn {
+        width: 90%; /* Mobilde tam genişlik */
+        bottom: 20px;
+        right: 5%;
+        left: 5%;
+        justify-content: center;
+        padding: 12px;
+    }
+    /* --- MOBİL TABLO DÜZENLEMESİ (Fix) --- */
+
+/* Varsayılan olarak mobil etiketleri gizle (Masaüstü temiz kalsın) */
+.mobile-label {
+    display: none;
+}
+
+@media screen and (max-width: 768px) {
+    /* Mobilde o üstteki başlık satırını komple yok et */
+    .mobile-hide-row {
+        display: none !important;
+    }
+
+    /* Kutucuğun içindeki etiketi göster */
+    .mobile-label {
+        display: block !important;
+        font-weight: 800;
+        color: #c8102e; /* FIU Kırmızısı */
+        margin-bottom: 5px;
+        font-size: 12px;
+        text-transform: uppercase;
+    }
+    
+    /* Inputların arasını biraz açalım */
+    .outline-table tr td {
+        margin-bottom: 10px;
+    }
+}
+}

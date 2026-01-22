@@ -1,0 +1,122 @@
+/* src/styles/outline.css */
+.outline-container {
+    max-width: 900px;
+    margin: 30px auto;
+    padding: 40px;
+    background-color: white;
+    box-shadow: 0 0 15px rgba(0,0,0,0.1);
+    font-family: 'Arial', sans-serif;
+    color: #000;
+}
+
+.outline-header {
+    text-align: center;
+    border-bottom: 3px solid #b30000;
+    padding-bottom: 20px;
+    margin-bottom: 20px;
+}
+
+.outline-header h2 {
+    margin: 0;
+    color: #b30000;
+    text-transform: uppercase;
+}
+
+.form-section {
+    margin-bottom: 20px;
+    border: 1px solid #000;
+}
+
+.form-row {
+    display: flex;
+    border-bottom: 1px solid #000;
+}
+
+.form-row:last-child {
+    border-bottom: none;
+}
+
+.form-group {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    padding: 5px;
+    border-right: 1px solid #000;
+}
+
+.form-group:last-child {
+    border-right: none;
+}
+
+.form-group label {
+    font-weight: bold;
+    font-size: 12px;
+    margin-bottom: 3px;
+    color: #333;
+}
+
+.form-group input, 
+.form-group select, 
+.form-group textarea {
+    border: 1px solid #ddd;
+    padding: 5px;
+    font-size: 14px;
+    outline: none;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.form-group input:focus {
+    background-color: #f9f9f9;
+    border-color: #b30000;
+}
+
+.section-title {
+    background-color: #e0e0e0;
+    font-weight: bold;
+    padding: 8px;
+    text-align: center;
+    border-bottom: 1px solid #000;
+    text-transform: uppercase;
+    font-size: 14px;
+}
+
+.full-width {
+    width: 100%;
+}
+
+.weekly-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.weekly-table th, .weekly-table td {
+    border: 1px solid #000;
+    padding: 8px;
+    text-align: left;
+    font-size: 13px;
+}
+
+.action-buttons {
+    margin-top: 20px;
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+}
+
+.btn-save {
+    background-color: #b30000;
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+.btn-cancel {
+    background-color: #555;
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    cursor: pointer;
+}

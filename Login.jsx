@@ -1,15 +1,13 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "../context/AuthContext"; // Context'i güncellemek için
+import { useAuth } from "../context/AuthContext"; 
 import api from "../api"; 
 import "../styles/login.css"; 
 
 export default function Login() {
   const navigate = useNavigate();
-  // Context'ten setUser fonksiyonunu çekiyoruz
   const { setUser } = useAuth(); 
   
-  // State'ler
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [remember, setRemember] = useState(false);
@@ -17,29 +15,29 @@ export default function Login() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // --- DİL PAKETİ (TRANSLATIONS) ---
+  // --- DİL PAKETİ ---
   const t = {
     EN: {
+     
       username: "Username / Email",
       password: "Password",
       placeholderUser: "instructor1",
-      remember: "Remember me",
+      
+      
       loginBtn: "Log In",
       loadingBtn: "Logging in...",
       errorMsg: "Login failed! Check your credentials or connection.",
-      
-      
     },
     TR: {
+     
       username: "Kullanıcı Adı / E-posta",
       password: "Şifre",
       placeholderUser: "egitmen1",
-      remember: "Beni Hatırla",
+      
+      
       loginBtn: "Giriş Yap",
       loadingBtn: "Giriş yapılıyor...",
       errorMsg: "Giriş başarısız! Bilgilerinizi veya bağlantınızı kontrol edin.",
-    
-    
     }
   };
 
@@ -59,75 +57,74 @@ export default function Login() {
 
       console.log("✅ Backend Cevabı:", response.data);
 
-      // 2. Token ve Kullanıcı Bilgilerini Al
+      // 2. Verileri Hazırla
       const token = response.data.access || response.data.token;
       const role = (response.data.role || "instructor").toLowerCase(); 
       const userName = response.data.username || email;
       const userId = response.data.user_id || response.data.id;
       
-      // KRİTİK: Ofis ve İsim Bilgilerini de alıyoruz
+      // Ekstra bilgiler
       const officeInfo = response.data.office_location || response.data.office || "";
       const firstName = response.data.first_name || "";
       const lastName = response.data.last_name || "";
+      const isSuperuser = response.data.is_superuser || false; 
       
-      // KRİTİK: Department ID
+      // Department ID
       let deptId = response.data.department_id || null; 
+      if (!deptId) {
+          deptId = 1; 
+      }
 
-      // 3. LocalStorage'a Kaydet (Kalıcılık için)
+      // --- 3. USER OBJESİNİ OLUŞTUR ---
+      const fullUserData = {
+          id: userId,
+          username: userName,
+          role: role,
+          department_id: deptId,
+          first_name: firstName,
+          last_name: lastName,
+          office: officeInfo,
+          email: response.data.email || "",
+          is_superuser: isSuperuser,
+          profile: response.data.profile || {}
+      };
+
+      // 4. LocalStorage Kaydı
       if (token) {
           localStorage.setItem("token", token);
-          localStorage.setItem("username", userName);
-          localStorage.setItem("role", role);
-          localStorage.setItem("user_id", userId);
+          localStorage.setItem("authTokens", JSON.stringify(response.data)); 
           
-          // --- GÜÇLENDİRİLMİŞ KISIM ---
-          if (deptId) {
-             localStorage.setItem("department_id", deptId);
-          } else {
-             console.warn("⚠️ Backend bölüm bilgisi göndermedi! Varsayılan olarak 1 atanıyor.");
-             deptId = 1; 
-             localStorage.setItem("department_id", "1");
-          }
-          
-          // --- 4. CONTEXT GÜNCELLEME (EN ÖNEMLİ YER) ---
-          // Burada Backend'den gelen TÜM veriyi (ofis dahil) Context'e atıyoruz.
-          // NewOutline.jsx bu veriyi buradan okuyacak.
+          localStorage.setItem("user", JSON.stringify(fullUserData));
+
+          // Context Güncelle
           if (setUser) {
-             setUser({
-                 id: userId,
-                 username: userName,
-                 role: role,
-                 department_id: deptId,
-                 first_name: firstName,
-                 last_name: lastName,
-                 office: officeInfo, // İşte aradığımız ofis bilgisi!
-                 email: response.data.email || ""
-             });
+              setUser(fullUserData);
           }
       } else {
           throw new Error("Token alınamadı!");
       }
 
-      // 5. ROL TABANLI YÖNLENDİRME
-      switch (role) {
-          case "admin":
-              navigate("/admin");
-              break;
-          case "vice_dean":
-          case "vicedean":
-              navigate("/vice-dean");
-              break;
-          case "dean":
-              navigate("/dean");
-              break;
-          case "rectorate":
-          case "rector":
-              navigate("/rector");
-              break;
-          case "instructor":
-          default:
-              navigate("/instructor");
-              break;
+      // 5. YÖNLENDİRME (ROUTING)
+      if (isSuperuser || role === 'admin') {
+          navigate("/admin");
+      } else {
+          switch (role) {
+              case "vice_dean":
+              case "vicedean":
+                  navigate("/vice-dean");
+                  break;
+              case "dean":
+                  navigate("/dean");
+                  break;
+              case "rectorate":
+              case "rector":
+                  navigate("/rector");
+                  break;
+              case "instructor":
+              default:
+                  navigate("/instructor");
+                  break;
+          }
       }
 
     } catch (err) {
@@ -140,6 +137,31 @@ export default function Login() {
 
   return (
     <div className="login-container">
+      {/* 🔥 MOBİL DÜZELTME YAMASI (CSS) 🔥 */}
+      <style>{`
+        @media screen and (max-width: 768px) {
+            .login-container {
+                flex-direction: column !important;
+                height: 100vh;
+            }
+            .login-right {
+                display: none !important; /* Mobilde resmi yok et */
+            }
+            .login-left {
+                width: 100% !important;
+                padding: 20px !important;
+                flex: 1 !important;
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+            }
+            .login-form {
+                width: 100% !important;
+                max-width: 100% !important;
+            }
+        }
+      `}</style>
+
       {/* LEFT SIDE (FORM) */}
       <div className="login-left">
         
@@ -149,7 +171,6 @@ export default function Login() {
             src="https://yt3.googleusercontent.com/fHhTkYBvybtsr6ndyjZWYeKdZcWfm5iDwHTwLW8Q68VknsXN3TNvelmRQkUOOEM7NWwIIj0Js9g=s900-c-k-c0x00ffffff-no-rj"
             alt="FIU Logo"
             className="login-logo"
-            // Resim kırık görünürse yedek logo
             onError={(e) => {e.target.src="https://www.final.edu.tr/assets/images/logo/logo-en.png"}}
           />
           

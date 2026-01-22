@@ -16,20 +16,13 @@ export default function DeanDepartments() {
 
   useEffect(() => { fetchData(); }, []);
 
-  // --- KESİN ÇÖZÜM: HARD LOGOUT FUNCTION (Burayı ekledim) ---
+  // --- KESİN ÇÖZÜM: HARD LOGOUT FUNCTION ---
   const handleForceLogout = (e) => {
-      // Olası event hatalarını engelle
       if(e && e.preventDefault) e.preventDefault();
       if(e && e.stopPropagation) e.stopPropagation();
-
-      // 1. Context içindeki logout'u çağır
       if(logout) logout();
-
-      // 2. LocalStorage'ı manuel temizle (Garanti olsun)
       localStorage.removeItem("access");
       localStorage.removeItem("refresh");
-
-      // 3. Tarayıcıyı zorla Login'e fırlat
       window.location.href = "/login";
   };
 
@@ -129,7 +122,14 @@ export default function DeanDepartments() {
                     <div style={{ padding: '25px' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
                           <div style={{ fontSize: '26px', background: '#e0e7ff', color: '#3730a3', width: '55px', height: '55px', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>🏢</div>
-                          <div><h3 style={{ margin: 0, fontSize: '18px', fontWeight: 'bold', color: '#1f2937' }}>Faculty of Engineering</h3><p style={{ margin: '3px 0 0', fontSize: '12px', color: '#6b7280' }}>{dept.name}</p></div>
+                          <div>
+                              {/* --- DYNAMIC FACULTY NAME --- */}
+                              <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 'bold', color: '#1f2937' }}>
+                                {dept.faculty_name || "No Faculty Assigned"}
+                              </h3>
+                              {/* --------------------------- */}
+                              <p style={{ margin: '3px 0 0', fontSize: '12px', color: '#6b7280' }}>{dept.name}</p>
+                          </div>
                         </div>
                         <hr style={{ border: 'none', borderTop: '1px solid #f3f4f6', margin: '15px 0' }} />
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>

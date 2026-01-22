@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import api from "../api";
 import "../styles/fiu-dashboard.css";
 
-const fiuLogo = "https://www.final.edu.tr/assets/img/logo.png";
+const fiuLogo = "https://www.final.edu.tr/success/fiulogo.jpg";
 
 export default function AdminDashboard() {
   // --- AUTH & NAV ---

@@ -4,20 +4,40 @@ import "../styles/paper.css";
 import { useNavigate, useLocation } from "react-router-dom";
 import api from "../api"; 
 
+// --- ROL BAZLI YÖNLENDİRME FONKSİYONU ---
+const getRedirectPath = (role) => {
+    if (!role) return '/instructor';
+    
+    // Rolü string'e çevir, küçült ve boşlukları sil
+    const r = String(role).toLowerCase().trim();
+    
+    console.log("🧭 Rota Hesaplanıyor... Algılanan Rol:", r);
+
+    if (r === 'dean') return '/dean';
+    // Vice Dean varyasyonlarını yakala
+    if (r.includes('vice')) return '/vice-dean';
+    if (r.includes('rect')) return '/rector';
+    if (r.includes('admin') || r.includes('super')) return '/admin';
+    
+    // Hiçbiri değilse Instructor
+    return '/instructor';
+};
+
 export default function NewOutline() {
   const { user } = useAuth(); 
   const navigate = useNavigate();
   const location = useLocation(); 
 
-  // --- 1. KESİN ADMIN KONTROLÜ (TOKEN ZORLAMALI) ---
+  // --- 1. ROL VE YETKİ KONTROLÜ ---
   const [isAdmin, setIsAdmin] = useState(false);
+  const [currentRole, setCurrentRole] = useState(null); 
   const [loadingRole, setLoadingRole] = useState(true);
 
   useEffect(() => {
-      const verifyAdmin = async () => {
-          // 1. Önce LocalStorage'dan Token ve User'ı bul
+      const verifyUserRole = async () => {
           let token = null;
           let localUser = null;
+          
           try {
               const tokensStr = localStorage.getItem('authTokens');
               if (tokensStr) token = JSON.parse(tokensStr).access;
@@ -26,34 +46,35 @@ export default function NewOutline() {
               if (userStr) localUser = JSON.parse(userStr);
           } catch(e) { console.error("Storage Error:", e); }
 
-          // 2. Eğer Token varsa Backend'e sor (Kesin Çözüm)
+          // Backend Kontrolü (En güvenlisi)
           if (token) {
               try {
-                  // Header'a token'ı zorla ekliyoruz (401 hatasını çözer)
                   const res = await api.get("/api/check-user-role/", {
                       headers: { Authorization: `Bearer ${token}` }
                   });
-                  console.log("🛡️ BACKEND TEYİDİ:", res.data);
+                  
                   setIsAdmin(res.data.is_admin);
+                  setCurrentRole(res.data.role); 
                   setLoadingRole(false);
-                  return; // Backend cevap verdiyse çık
+                  return;
               } catch (err) {
-                  console.error("Backend kontrolü başarısız, lokale bakılıyor...", err);
+                  console.error("Backend rol kontrolü başarısız...", err);
               }
           }
 
-          // 3. Backend hata verdiyse veya cevap dönmediyse LocalStorage'a güven
+          // Local Kontrol (Yedek)
           if (localUser) {
-              const role = (localUser.role || localUser.profile?.role || "").toLowerCase();
+              const role = (localUser.role || localUser.profile?.role || "instructor").toLowerCase();
               const isSuper = localUser.is_superuser === true || String(localUser.is_superuser) === "true";
               const adminStatus = role === 'admin' || role === 'rectorate' || isSuper;
-              console.log("🛡️ LOCAL TEYİT:", adminStatus);
+              
               setIsAdmin(adminStatus);
+              setCurrentRole(role);
           }
           setLoadingRole(false);
       };
 
-      verifyAdmin();
+      verifyUserRole();
   }, []);
 
   const passedState = location.state?.courseToEdit || null;
@@ -98,14 +119,14 @@ export default function NewOutline() {
       aims: "", content: "", outcomes: "",
       weeks: Array(16).fill({ subject: "", clo: "", task: "" }), 
       textbooks: "", 
-      policies: "" 
+      policies: "",
+      status: "submitted" // Varsayılan statü
   });
 
   const [evaluations, setEvaluations] = useState([]);
 
   // --- 2. USER YÜKLENDİĞİNDE OTOMATİK DOLDUR ---
   useEffect(() => {
-    // Sadece yeni outline ise ve user geldiyse (Context veya LocalStorage'dan)
     let activeUser = user;
     if (!activeUser) {
         try { activeUser = JSON.parse(localStorage.getItem('user')); } catch(e){}
@@ -125,17 +146,14 @@ export default function NewOutline() {
   useEffect(() => {
     const fetchResources = async () => {
         try {
-            // Dersleri Çek
             const courseRes = await api.get("/api/courses/");
             setAvailableCourses(courseRes.data);
             
-            // Asistanları Çek
             try {
                 const assistantRes = await api.get("/api/users/assistants/"); 
                 setAssistants(assistantRes.data);
             } catch (e) {}
 
-            // POLİTİKALARI ÇEK (Yeni outline için)
             if (!courseId) {
                 try {
                     const settingsRes = await api.get("/api/system-settings/");
@@ -168,7 +186,7 @@ export default function NewOutline() {
             } else {
                 percentage = String(rawVal);
             }
-            loadedEvaluations.push({ type: opt.key, count: count, percentage: percentage });
+            loadedEvaluations.push({ type: opt.key, count, percentage: percentage });
         }
     });
     setEvaluations(loadedEvaluations);
@@ -180,7 +198,6 @@ export default function NewOutline() {
         loadedWeeks = [...loadedWeeks, ...emptyRows];
     }
 
-    // User yoksa localStorage'dan al
     let activeUser = user;
     if (!activeUser) {
         try { activeUser = JSON.parse(localStorage.getItem('user')); } catch(e){}
@@ -198,7 +215,8 @@ export default function NewOutline() {
         
         assistant: apiData.assistant_name || "", assistantEmail: apiData.assistant_email || "", assistantOffice: apiData.assistant_office || "",
         weeks: loadedWeeks, textbooks: apiData.textbooks || "",
-        policies: apiData.policies || data.policies || "" 
+        policies: apiData.policies || data.policies || "",
+        status: apiData.status || "submitted" // Statüyü veritabanından alıyoruz
     };
   };
 
@@ -232,7 +250,6 @@ export default function NewOutline() {
           setData(prev => ({
               ...prev,
               ...mappedData,
-              // Hoca bilgilerini giriş yapmış kullanıcıdan koru
               lecturer: mappedData.lecturer || (activeUser ? getLecturerName(activeUser) : ""),
               lecturerEmail: mappedData.lecturerEmail || (activeUser?.email || ""),
               lecturerOffice: mappedData.lecturerOffice || (activeUser ? getLecturerOffice(activeUser) : "")
@@ -264,7 +281,7 @@ export default function NewOutline() {
   };
 
   const handleChange = (e) => setData({ ...data, [e.target.name]: e.target.value });
-  
+   
   const handleWeekChange = (index, field, value) => {
     const newWeeks = [...data.weeks];
     newWeeks[index] = { ...newWeeks[index], [field]: value };
@@ -280,34 +297,63 @@ export default function NewOutline() {
       return acc + (isNaN(val) ? 0 : val);
   }, 0);
 
-  // --- CLO VALIDATION ---
+  // --- 🔥 GÜNCELLENMİŞ CLO KONTROL FONKSİYONU 🔥 ---
   const validateCLOs = () => {
-      const mainCLOText = data.outcomes || "";
+      // 1. Ana CLO kutusu boş mu?
+      if (!data.outcomes || data.outcomes.trim() === "") {
+          return "Please fill out the 'CLOs' (Course Learning Outcomes) field.";
+      }
+
+      // 2. Ana CLO maddelerini analiz et
+      const mainCLOText = data.outcomes;
       const definedCLOs = [];
       const lines = mainCLOText.split('\n');
+      
       lines.forEach(line => {
+          // Satırın başında sayı var mı? (örn: "1. Blabla" veya "2) Blabla")
           const match = line.trim().match(/^(\d+)[\.\)\s]/);
           if (match) definedCLOs.push(parseInt(match[1]));
       });
 
+      if (definedCLOs.length === 0) {
+          return "Invalid CLO format! Please number your outcomes:\n1. Outcome one\n2. Outcome two";
+      }
+
+      // 3. Haftalık tablodaki CLO'ları kontrol et
       for (let i = 0; i < data.weeks.length; i++) {
           const week = data.weeks[i];
-          const weekCLOStr = week.clo || "";
-          if (!weekCLOStr.trim()) continue;
+          const weekCLOStr = week.clo || ""; 
+
+          if (!weekCLOStr.trim()) continue; 
+
           const parts = weekCLOStr.split(/[ ,]+/);
+          const seenInThisWeek = new Set(); // Bu hafta içinde tekrarı önlemek için
+
           for (let part of parts) {
               if (!part.trim()) continue;
               const num = parseInt(part);
-              if (isNaN(num)) return `Week ${i + 1}: Invalid CLO format.`;
-              if (definedCLOs.length > 0 && !definedCLOs.includes(num)) {
-                  return `Week ${i + 1}: Referenced CLO '${num}' does not exist in the main 'CLOs' list!`;
+
+              // Sayı değilse
+              if (isNaN(num)) {
+                  return `Week ${i + 1}: Invalid format '${part}'. Please use numbers only (e.g., 1, 2).`;
               }
+
+              // Tanımlı değilse
+              if (!definedCLOs.includes(num)) {
+                  return `Week ${i + 1}: CLO '${num}' is not defined in the main list above!`;
+              }
+
+              // AYNI HAFTADA TEKRAR VARSA (İSTEĞİN ÜZERİNE EKLENDİ)
+              if (seenInThisWeek.has(num)) {
+                  return `Week ${i + 1}: CLO '${num}' is repeated! Each CLO should be listed only once per week.`;
+              }
+              seenInThisWeek.add(num);
           }
       }
       return null;
   };
 
-  // --- SAVE ---
+  // --- SAVE AND SUBMIT LOGIC ---
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!data.code) { alert("Hata: Lütfen Code alanını doldurun."); return; }
@@ -318,11 +364,13 @@ export default function NewOutline() {
         return; 
     }
 
+    // --- CLO KONTROLÜ (BURADA ÇAĞIRIYORUZ) ---
     const cloError = validateCLOs();
     if (cloError) {
-        alert(`❌ CLO Validation Error:\n${cloError}`);
-        return;
+        alert(`❌ CLO Error:\n${cloError}`);
+        return; // Hata varsa kaydetme işlemini durdur
     }
+    // -----------------------------------------
 
     let activeUser = user;
     if (!activeUser) {
@@ -343,16 +391,31 @@ export default function NewOutline() {
         }
     });
 
+    // --- KRİTİK STATÜ MANTIĞI ---
+    let finalStatus = 'submitted'; 
+    const roleStr = String(currentRole || "").toLowerCase();
+    const isManager = roleStr.includes('dean') || roleStr.includes('vice') || roleStr.includes('admin') || isAdmin;
+
+    if (courseId) {
+        if (isManager) {
+            finalStatus = data.status; 
+        } else {
+            finalStatus = 'submitted';
+        }
+    } else {
+        finalStatus = 'submitted';
+    }
+
     const payload = {
         ...data,
         ...evalData, 
         instructor: instructorId,
         department: deptId,
-        status: 'submitted', 
+        status: finalStatus, 
         course_name: data.courseName,
         course_code: data.code,
         theory_hours: safeInt(data.theory),        
-        lab_hours: safeInt(data.appLab),           
+        lab_hours: safeInt(data.appLab),            
         ects_credit: safeInt(data.ects),
         local_credit: safeInt(data.localCredit),
         lecturer_name: data.lecturer || getLecturerName(activeUser),
@@ -366,12 +429,22 @@ export default function NewOutline() {
     try {
       if (courseId) {
         await api.put("/api/outlines/" + courseId + "/", payload);
-        alert("✅ Güncelleme Başarılı!");
+        if (isManager) {
+             alert("✅ Changes have been saved! ");
+        } else {
+             alert("✅ Updated and resubmitted for approval (forwarded to Vice Dean)!");
+        }
       } else {
         await api.post("/api/outlines/", payload);
-        alert("✅ Ders Başarıyla Oluşturuldu!");
+        alert("✅ Ders Başarıyla Oluşturuldu ve Onaya Gönderildi!");
       }
-      navigate("/instructor"); 
+      
+      const roleToUse = currentRole || "instructor"; 
+      const targetPath = getRedirectPath(roleToUse);
+      
+      console.log("🚀 Yönlendirirme (NewOutline):", roleToUse, "->", targetPath);
+      navigate(targetPath);
+
     } catch (error) {
       console.error("Kayıt Hatası:", error);
       alert("HATA: " + JSON.stringify(error.response?.data || "Bilinmeyen Hata"));
@@ -382,7 +455,7 @@ export default function NewOutline() {
     <div className="paper-container">
       <div className="a4-page">
         <div className="doc-header">
-           <img src="https://www.final.edu.tr/assets/images/logo/logo-en.png" alt="FIU" style={{height:'60px'}}/>
+           <img src="https://www.final.edu.tr/success/fiulogo.jpg" alt="FIU" style={{height:'60px'}}/>
            <div className="uni-title">FINAL INTERNATIONAL<br/>UNIVERSITY</div>
         </div>
         <div className="doc-title">{courseId ? "EDIT COURSE OUTLINE" : "COURSE OUTLINE"}</div>
@@ -395,23 +468,10 @@ export default function NewOutline() {
               <tr>
                 <td style={{fontWeight:'bold', width:'15%'}}>Course Name</td>
                 <td colSpan="5">
-                  {/* Edit Modunda INPUT, Yeni Eklemede SELECT */}
                   {courseId ? (
-                      <input 
-                        className="table-input" 
-                        name="courseName" 
-                        value={data.courseName} 
-                        onChange={handleChange} 
-                        required
-                      />
+                      <input className="table-input" name="courseName" value={data.courseName} onChange={handleChange} required />
                   ) : (
-                      <select 
-                        className="table-input" 
-                        onChange={handleCourseSelect} 
-                        defaultValue="" 
-                        required 
-                        style={{fontWeight: 'bold'}}
-                      >
+                      <select className="table-input" onChange={handleCourseSelect} defaultValue="" required style={{fontWeight: 'bold'}}>
                         <option value="" disabled>Select a Course to Autofill...</option>
                         {availableCourses.map(c => (
                             <option key={c.id} value={c.id}>{c.course_code ? `${c.course_code} - ` : ""}{c.course_name || c.name}</option>
@@ -420,20 +480,45 @@ export default function NewOutline() {
                   )}
                 </td>
               </tr>
-              <tr><th>Code</th><th>Semester</th><th>Theory</th><th>App/Lab</th><th>Credit</th><th>ECTS</th></tr>
-              <tr style={{height:'30px'}}><td><input className="table-input" name="code" value={data.code} onChange={handleChange}/></td><td><input className="table-input" name="semester" value={data.semester} onChange={handleChange}/></td><td><input className="table-input" name="theory" value={data.theory} onChange={handleChange}/></td><td><input className="table-input" name="appLab" value={data.appLab} onChange={handleChange}/></td><td><input className="table-input" name="localCredit" value={data.localCredit} onChange={handleChange}/></td><td><input className="table-input" name="ects" value={data.ects} onChange={handleChange}/></td></tr>
+              
+              {/* --- MOBIL FIX (GÜNCELLENDİ) --- */}
+              <tr className="mobile-hide-row"><th>Code</th><th>Semester</th><th>Theory</th><th>App/Lab</th><th>Credit</th><th>ECTS</th></tr>
+              {/* Buradaki height:30px'i sildik */}
+              <tr>
+                  <td><span className="mobile-label">Code:</span><input className="table-input" name="code" value={data.code} onChange={handleChange}/></td>
+                  <td><span className="mobile-label">Semester:</span><input className="table-input" name="semester" value={data.semester} onChange={handleChange}/></td>
+                  <td><span className="mobile-label">Theory:</span><input className="table-input" name="theory" value={data.theory} onChange={handleChange}/></td>
+                  <td><span className="mobile-label">App/Lab:</span><input className="table-input" name="appLab" value={data.appLab} onChange={handleChange}/></td>
+                  <td><span className="mobile-label">Credit:</span><input className="table-input" name="localCredit" value={data.localCredit} onChange={handleChange}/></td>
+                  <td><span className="mobile-label">ECTS:</span><input className="table-input" name="ects" value={data.ects} onChange={handleChange}/></td>
+              </tr>
+              {/* ------------------------------- */}
+
               <tr><td style={{fontWeight:'bold'}}>Prerequisites:</td><td colSpan="2"><input className="table-input" name="prereq" value={data.prereq} onChange={handleChange}/></td><td style={{fontWeight:'bold'}}>Level:</td><td><input className="table-input" name="level" value={data.level} onChange={handleChange}/></td><td><select className="table-input" name="language" value={data.language} onChange={handleChange}><option>English</option><option>Turkish</option></select></td></tr>
               <tr><td style={{fontWeight:'bold'}}>Course Lecturer:</td><td colSpan="2"><input className="table-input" name="lecturer" value={data.lecturer} onChange={handleChange} style={{backgroundColor: '#f9fafb'}} /></td><td style={{fontWeight:'bold'}}>E-mail:</td><td><input className="table-input" name="lecturerEmail" value={data.lecturerEmail} onChange={handleChange} style={{backgroundColor: '#f9fafb'}}/></td><td><b>Office:</b> <input className="table-input" name="lecturerOffice" value={data.lecturerOffice} onChange={handleChange} style={{backgroundColor: '#f9fafb'}}/></td></tr>
               <tr><td style={{fontWeight:'bold'}}>Assistant: <input type="checkbox" style={{marginLeft:'5px'}} checked={hasAssistant} onChange={handleAssistantCheckbox} /></td><td colSpan="2">{hasAssistant ? (<select className="table-input" onChange={handleAssistantSelect} defaultValue=""><option value="" disabled>Select Assistant...</option>{assistants.map(ast => <option key={ast.id} value={ast.id}>{ast.first_name} {ast.last_name}</option>)}</select>) : <input className="table-input" value="None" disabled style={{backgroundColor:'#eee', color:'#999'}}/>}</td><td style={{fontWeight:'bold'}}>E-mail:</td><td><input className="table-input" name="assistantEmail" value={hasAssistant ? data.assistantEmail : ""} readOnly style={{backgroundColor: hasAssistant ? '#f3f4f6' : '#fff'}}/></td><td><b>Office:</b> <input className="table-input" name="assistantOffice" value={hasAssistant ? data.assistantOffice : ""} readOnly style={{backgroundColor: hasAssistant ? '#f3f4f6' : '#fff'}}/></td></tr>
               <tr><td style={{fontWeight:'bold', verticalAlign:'top'}}>Lecture Hours</td><td colSpan="2" style={{padding:0}}><div style={{borderBottom:'1px solid #000', padding:'4px'}}>Gr. 1 <input className="table-input" name="gr1" value={data.gr1} onChange={handleChange}/></div><div style={{borderBottom:'1px solid #000', padding:'4px'}}>Gr. 2 <input className="table-input" name="gr2" value={data.gr2} onChange={handleChange}/></div><div style={{padding:'4px'}}>Gr. 3 <input className="table-input" name="gr3" value={data.gr3} onChange={handleChange}/></div></td><td colSpan="2" style={{verticalAlign:'middle', fontWeight:'bold', textAlign:'center'}}>Office Hours</td><td style={{verticalAlign:'middle'}}><textarea className="table-textarea" name="officeHours" value={data.officeHours} onChange={handleChange}></textarea></td></tr>
               <tr><td style={{fontWeight:'bold'}}>Aims:</td><td colSpan="5"><textarea className="table-textarea" name="aims" value={data.aims} style={{height:'80px'}} onChange={handleChange}></textarea></td></tr>
               <tr><td style={{fontWeight:'bold'}}>Content:</td><td colSpan="5"><textarea className="table-textarea" name="content" value={data.content} style={{height:'80px'}} onChange={handleChange}></textarea></td></tr>
-              <tr><td style={{fontWeight:'bold'}}>CLOs:</td><td colSpan="5"><textarea className="table-textarea" name="outcomes" value={data.outcomes} style={{height:'80px'}} onChange={handleChange} placeholder="1. Outcome... 2. Outcome..."></textarea></td></tr>
+              
+              {/* --- CLOs KISMI --- */}
+              <tr>
+                  <td style={{fontWeight:'bold'}}>CLOs:</td>
+                  <td colSpan="5">
+                      <textarea 
+                        className="table-textarea" 
+                        name="outcomes" 
+                        value={data.outcomes} 
+                        style={{height:'120px'}} 
+                        onChange={handleChange} 
+                        placeholder="1. Outcome one...&#10;2. Outcome two..."
+                      ></textarea>
+                  </td>
+              </tr>
             </tbody>
           </table>
           <div style={{marginTop:'20px'}}></div>
           
-          {/* EVALUATION TABLOSU */}
           <table className="outline-table">
             <tbody>
                 <tr><td colSpan="4" className="gray-header">EVALUATION</td></tr>
@@ -453,7 +538,6 @@ export default function NewOutline() {
 
           <div style={{marginTop:'20px'}}></div>
           
-          {/* WEEKLY TOPICS */}
           <table className="outline-table">
             <tbody>
                 <tr><td colSpan="4" className="gray-header">WEEKLY TOPICS TO BE COVERED</td></tr>
@@ -464,7 +548,15 @@ export default function NewOutline() {
                         {index === 15 ? (<td colSpan="3" style={{textAlign:'center', fontWeight:'bold', padding: '10px'}}>FINAL EXAMINATIONS</td>) : (
                              <>
                                 <td><textarea className="table-textarea" style={{minHeight: '40px'}} value={week.subject} onChange={(e) => handleWeekChange(index, 'subject', e.target.value)}></textarea></td>
-                                <td><textarea className="table-textarea" style={{minHeight: '40px'}} value={week.clo} onChange={(e) => handleWeekChange(index, 'clo', e.target.value)} placeholder="e.g. 1, 3"></textarea></td>
+                                <td>
+                                    <textarea 
+                                        className="table-textarea" 
+                                        style={{minHeight: '40px', textAlign: 'center'}} 
+                                        value={week.clo} 
+                                        onChange={(e) => handleWeekChange(index, 'clo', e.target.value)} 
+                                        placeholder="1, 2"
+                                    ></textarea>
+                                </td>
                                 <td><textarea className="table-textarea" style={{minHeight: '40px'}} value={week.task} onChange={(e) => handleWeekChange(index, 'task', e.target.value)}></textarea></td>
                              </>
                         )}
@@ -473,7 +565,6 @@ export default function NewOutline() {
             </tbody>
           </table>
 
-          {/* POLICIES (Admin Düzenler, Hoca Görür) */}
           <table className="outline-table" style={{marginTop:'20px'}}>
              <tbody>
                 <tr><td style={{width:'20%', fontWeight:'bold'}}>Textbooks</td><td><textarea className="table-textarea" name="textbooks" value={data.textbooks} onChange={handleChange}></textarea></td></tr>
@@ -494,7 +585,7 @@ export default function NewOutline() {
                                 height:'100%', 
                                 backgroundColor: isAdmin ? '#ffffff' : '#f3f4f6', 
                                 cursor: isAdmin ? 'text' : 'not-allowed', 
-                                color: '#333',
+                                color: '#333', 
                                 fontSize: '13px',
                                 whiteSpace: 'pre-wrap'
                             }} 
@@ -505,7 +596,9 @@ export default function NewOutline() {
              </tbody>
           </table>
 
-          <button type="submit" className="floating-save-btn">{courseId ? "💾 Update Outline" : "💾 Submit to Vice Dean"}</button>
+          <button type="submit" className="floating-save-btn">
+              {courseId ? "💾 Update Outline" : "💾 Submit to Vice Dean"}
+          </button>
         </form>
       </div>
     </div>

@@ -1,0 +1,78 @@
+/* src/styles/form.css */
+.form-container {
+  padding: 30px;
+  background-color: #f8f9fc;
+  min-height: 100vh;
+}
+
+.form-card {
+  background: white;
+  padding: 30px;
+  border-radius: 15px;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+.form-section-title {
+  font-size: 18px;
+  font-weight: bold;
+  color: #2b3674;
+  margin-bottom: 20px;
+  border-bottom: 2px solid #f0f0f0;
+  padding-bottom: 10px;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr; /* İki sütun */
+  gap: 20px;
+  margin-bottom: 15px;
+}
+
+.form-row.three-col {
+  grid-template-columns: 1fr 1fr 1fr; /* Üç sütun */
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.form-group label {
+  font-size: 14px;
+  font-weight: 600;
+  color: #4a5568;
+  margin-bottom: 8px;
+}
+
+.form-group input, .form-group select, .form-group textarea {
+  padding: 12px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 14px;
+  transition: all 0.2s;
+}
+
+.form-group input:focus, .form-group textarea:focus {
+  border-color: #2b3674;
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(43, 54, 116, 0.1);
+}
+
+.btn-submit {
+  background-color: #2b3674;
+  color: white;
+  padding: 15px 30px;
+  border: none;
+  border-radius: 10px;
+  font-weight: bold;
+  cursor: pointer;
+  width: 100%;
+  margin-top: 20px;
+  font-size: 16px;
+}
+
+.btn-submit:hover {
+  background-color: #1a2250;
+}

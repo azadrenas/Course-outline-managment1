@@ -1,0 +1,160 @@
+import React from "react";
+
+export default function Login() {
+  return (
+    <div className="container" style={containerStyle}>
+      {/* LEFT PANEL */}
+      <div className="left-panel" style={leftPanelStyle}>
+        <div className="lang-icon" style={langIconStyle}>🌐</div>
+
+        <div className="logo-box" style={logoBoxStyle}>
+          <img
+            src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcToxqbiElXBH_Ii16yY1kib9IC6s_QQvAqtbQ&s"
+            style={{ width: "190px" }}
+            alt="Logo"
+          />
+        </div>
+
+        {/* LOGIN FORM */}
+        <form id="loginForm" style={formStyle}>
+          <div id="loginError" style={{ color: "red", fontSize: "14px", display: "none" }}>
+            Invalid email or password.
+          </div>
+
+          <div className="form-group" style={formGroupStyle}>
+            <label>Email</label>
+            <input
+              id="loginEmail"
+              type="email"
+              placeholder="name@example.com"
+              style={inputStyle}
+            />
+          </div>
+
+          <div className="form-group" style={formGroupStyle}>
+            <label>Password</label>
+            <input
+              id="loginPassword"
+              type="password"
+              style={inputStyle}
+            />
+          </div>
+
+          <div className="extra-row" style={extraRowStyle}>
+            <label className="remember" style={rememberStyle}>
+              <input type="checkbox" /> Remember me
+            </label>
+
+            <span
+              style={{ cursor: "pointer", textDecoration: "underline" }}
+              onClick={() => (window.location.href = "/forgot")}
+            >
+              Forgot Password?
+            </span>
+          </div>
+
+          <button className="login-btn" type="submit" style={loginBtnStyle}>
+            Log In
+          </button>
+        </form>
+      </div>
+
+      {/* RIGHT PANEL */}
+      <div className="right-panel" style={rightPanelStyle}>
+        <img
+          src="https://www.studyportalturkey.com/wp-content/uploads/2024/06/n05-6817jpg1718105706.jpg"
+          style={rightPanelImageStyle}
+          alt="Campus"
+        />
+      </div>
+    </div>
+  );
+}
+
+/* INLINE STYLE OBJECTS */
+
+const containerStyle = {
+  width: "100%",
+  height: "100vh",
+  display: "flex",
+  overflow: "hidden"
+};
+
+const leftPanelStyle = {
+  width: "45%",
+  padding: "60px",
+  display: "flex",
+  flexDirection: "column",
+  justifyContent: "center",
+  position: "relative"
+};
+
+const langIconStyle = {
+  position: "absolute",
+  right: "25px",
+  top: "25px",
+  fontSize: "24px",
+  cursor: "pointer"
+};
+
+const logoBoxStyle = {
+  display: "flex",
+  justifyContent: "center",
+  marginBottom: "40px"
+};
+
+const formStyle = {
+  display: "flex",
+  flexDirection: "column",
+  gap: "25px"
+};
+
+const formGroupStyle = {
+  display: "flex",
+  flexDirection: "column",
+  gap: "6px"
+};
+
+const inputStyle = {
+  padding: "10px 5px",
+  border: "none",
+  borderBottom: "2px solid #000",
+  fontSize: "16px",
+  outline: "none"
+};
+
+const extraRowStyle = {
+  display: "flex",
+  justifyContent: "space-between",
+  fontSize: "13px",
+  marginTop: "10px"
+};
+
+const rememberStyle = {
+  display: "flex",
+  gap: "6px",
+  alignItems: "center"
+};
+
+const loginBtnStyle = {
+  marginTop: "20px",
+  padding: "12px 0",
+  background: "#111",
+  color: "#fff",
+  border: "none",
+  borderRadius: "30px",
+  fontSize: "16px",
+  cursor: "pointer"
+};
+
+const rightPanelStyle = {
+  width: "55%",
+  height: "100%"
+};
+
+const rightPanelImageStyle = {
+  width: "100%",
+  height: "100%",
+  objectFit: "cover",
+  objectPosition: "center"
+};
